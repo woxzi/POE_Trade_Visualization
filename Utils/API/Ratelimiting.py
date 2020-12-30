@@ -5,6 +5,7 @@ from collections import deque
 from threading import Lock
 from time import sleep
 from functools import wraps
+from Utils.API import API_Names
 
 DEFAULT_RATELIMIT_NAME = 'default'
 
@@ -36,7 +37,7 @@ class RatelimitRule(object):
         return f"RatelimitRule(Max Requests: {self.max_executions}, Interval: {self.interval}, Buffer Interval: {self.buffer_interval})"
 
 
-def ratelimit(name: str = DEFAULT_RATELIMIT_NAME):
+def ratelimit(name: Union[str, API_Names] = DEFAULT_RATELIMIT_NAME):
     """
     A decorator that ratelimits the decorated function, so that it may only be executed a specified number of times in the given interval
 
@@ -79,7 +80,7 @@ class _RequestTracker(object):
         """
         self.clean_requests()
         if len(self.requests) == self.rule.max_executions:
-            return self.requests[0] + self.rule.interval + self.rule.buffer_interval
+            return self.requests[0] + self.rule.interval
         else:
             return None
 
@@ -108,13 +109,18 @@ class _Ratelimit(object):
                 target_time = tracker.request_ratelimited_until()
                 if target_time is not None:
                     wait_time = target_time - datetime.utcnow()
+                    if wait_time < timedelta(0):
+                        wait_time = tracker.rule.buffer_interval
+                    else:
+                        wait_time = wait_time + tracker.rule.buffer_interval
+                    print(f'Waiting for {wait_time.total_seconds()} seconds on rule {tracker.rule}')
                     sleep(wait_time.total_seconds())
 
             # execute the request
             execution_timestamp = datetime.utcnow()
             result = func(*args, **kwargs)
 
-            # add the request to the tracker
+            # add the request to the trackers
             for tracker in self.trackers:
                 tracker.insert_request_timestamp(execution_timestamp)
 
