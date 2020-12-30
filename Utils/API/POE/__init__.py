@@ -1,5 +1,10 @@
-from Utils.API.Ratelimit import RatelimitRule
+from Utils.API.Ratelimiting import RatelimitRule, create_ratelimit
 from requests import post
+from Utils.API import API_Names
+
+# extract related enums for convenience
+POE_API_NAME = API_Names.PATH_OF_EXILE
+TRADE_API_NAME = API_Names.PATH_OF_EXILE_TRADE
 
 
 def _get_trade_api_ratelimit_rules():
@@ -18,7 +23,7 @@ def _get_trade_api_ratelimit_rules():
     return rules
 
 
-API_NAME = 'Path of Exile API'
-TRADE_API_NAME = API_NAME + ' (Trade)'
 TRADE_API_RATELIMIT_RULES = _get_trade_api_ratelimit_rules()
+
+create_ratelimit(TRADE_API_RATELIMIT_RULES, name=TRADE_API_NAME)
 
