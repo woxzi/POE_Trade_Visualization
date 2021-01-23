@@ -1,11 +1,11 @@
-from typing import Union, Iterable
-from datetime import timedelta, datetime
-from queue import SimpleQueue
 from collections import deque
+from datetime import timedelta, datetime
+from functools import wraps
 from threading import Lock
 from time import sleep
-from functools import wraps
-from Utils.API import API_Names
+from typing import Union, Iterable
+
+from Tools.API import API_Names
 
 DEFAULT_RATELIMIT_NAME = 'default'
 
@@ -48,9 +48,12 @@ def ratelimit(name: Union[str, API_Names] = DEFAULT_RATELIMIT_NAME):
     :return: The result of the decorated function
     """
 
+    name = name.value if isinstance(name, API_Names) else name
+
     def ratelimit_decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
+            global _ratelimits
             return _ratelimits[name].execute(func, args, kwargs)
 
         return wrapper
@@ -58,7 +61,9 @@ def ratelimit(name: Union[str, API_Names] = DEFAULT_RATELIMIT_NAME):
     return ratelimit_decorator
 
 
-def create_ratelimit(rules: Union[RatelimitRule, Iterable[RatelimitRule]], name=DEFAULT_RATELIMIT_NAME):
+def create_ratelimit(rules: Union[RatelimitRule, Iterable[RatelimitRule]], name: Union[API_Names, str] = DEFAULT_RATELIMIT_NAME):
+    global _ratelimits
+    name = name if isinstance(name, str) else name.value
     _ratelimits[name] = _Ratelimit(rules)
 
 

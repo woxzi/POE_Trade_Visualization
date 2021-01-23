@@ -2,8 +2,6 @@ from requests import get
 from dataclasses import dataclass, field
 from itertools import chain
 
-_items_JSON = get('https://www.pathofexile.com/api/trade/data/items').json()['result']
-
 
 @dataclass(eq=True)
 class Item(object):
@@ -22,14 +20,14 @@ class Item(object):
         return ', '.join([f'{field.replace("_", " ").title()}: {getattr(self, field)}' for field in field_list if getattr(self, field) is not None])
 
 
-def _load_items_json(json):
+def _load_items_json(items_json):
     '''
-    Formats the incoming JSON data coming fromt he POE API
+    Formats the incoming JSON data coming from the POE API
     :param json: A parsed json object from the POE data site
     :return: A dict of categories, each with individual item objects
     '''
     categories = {}
-    for category in _items_JSON:
+    for category in items_json:
         category_items = []
         for item in category['entries']:
             category_items.append(Item(**item))
@@ -40,5 +38,5 @@ def _load_items_json(json):
     return categories
 
 
-CATEGORIZED_ITEMS = _load_items_json(_items_JSON)
+CATEGORIZED_ITEMS = _load_items_json(get('https://www.pathofexile.com/api/trade/data/items').json()['result'])
 ITEMS_BY_NAME = {item.name: item for item in chain.from_iterable(CATEGORIZED_ITEMS.values())}
