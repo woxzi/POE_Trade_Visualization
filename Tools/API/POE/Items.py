@@ -2,6 +2,8 @@ from requests import get
 from dataclasses import dataclass, field
 from itertools import chain
 
+from Tools.API.POE import _search_headers
+
 
 @dataclass(eq=True)
 class Item(object):
@@ -38,5 +40,5 @@ def _load_items_json(items_json):
     return categories
 
 
-CATEGORIZED_ITEMS = _load_items_json(get('https://www.pathofexile.com/api/trade/data/items').json()['result'])
+CATEGORIZED_ITEMS = _load_items_json(get('https://www.pathofexile.com/api/trade/data/items', headers=_search_headers).json()['result'])
 ITEMS_BY_NAME = {item.name: item for item in chain.from_iterable(CATEGORIZED_ITEMS.values())}
